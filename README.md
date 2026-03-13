@@ -1,7 +1,7 @@
 # Cybersecurity Toolkit
 
 Conjunto de ferramentas simples em Python para uso em cibersegurança: geração de passphrases, pequenas análises de segurança e automação do dia a dia.  
-O objetivo deste repositório é concentrar num único sítio os scripts e pequenas apps que realmente uso e que podem ser úteis para outras pessoas. [web:97][web:101]
+O objetivo deste repositório é concentrar num único sítio os scripts e pequenas apps que realmente uso e que podem ser úteis para outras pessoas.
 
 ## Como usar
 
