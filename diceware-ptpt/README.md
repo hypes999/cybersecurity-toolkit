@@ -3,8 +3,6 @@
 Aplicação para gerar passphrases fortes em Português de Portugal, pensada para uso em cibersegurança (passwords mestres, seed phrases, etc.).  
 Baseia‑se em Diceware e numa wordlist PT‑PT filtrada para palavras simples e memorizáveis.
 
-<img width="1134" height="377" alt="diceware em funcionamento" src="https://github.com/user-attachments/assets/0193d12e-6ae3-44b8-9438-e10ab172bf94" />
-
 ## Wordlist
 
 A wordlist `wordlist_ptpt.txt` é gerada a partir de `pt_PT.dic` com estes filtros:
