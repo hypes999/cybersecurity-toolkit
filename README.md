@@ -10,6 +10,9 @@ Ferramentas de cybersecurity para portefólio e SOC operations.
 - **[diceware-ptpt](diceware-ptpt/)**  
   Gerador Diceware com GUI Tkinter.
 
+- **[Severity-Calculator](Severity-Calculator/)**  
+  Calculadora simples de severidade para findings de segurança.
+
 ## Setup
 
 ```bash
