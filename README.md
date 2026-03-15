@@ -7,7 +7,7 @@ Ferramentas de cybersecurity para portefólio e SOC operations.
 - **[password-leak-checker](password-leak-checker/)**  
   Verifica passwords contra HIBP dataset local (CLI + Streamlit GUI).
 
-- **[diceware-generator](diceware-generator/)**  
+- **[diceware-ptpt](diceware-ptpt/)**  
   Gerador Diceware com GUI Tkinter.
 
 ## Setup
