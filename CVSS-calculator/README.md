@@ -89,3 +89,6 @@ A interface da calculadora é dividida em duas partes principais:
     -   A classificação de severidade (None, Low, Medium, High, Critical).
     -   Uma barra de progresso colorida que representa visualmente o nível de risco.
     -   A Vector String completa, com um botão para copiar.
+
+<img width="864" height="752" alt="app runing" src="https://github.com/user-attachments/assets/9565d8e0-c140-4504-8b63-955524aa131c" />
+
