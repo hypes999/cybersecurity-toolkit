@@ -6,7 +6,7 @@ Ferramentas de cybersecurity para portefólio e SOC operations.
 - **[password-leak-checker](password-leak-checker/)**  
   Verifica passwords contra HIBP dataset local (CLI + Streamlit GUI).
  
-- **[password-strenght-checker](password-strenght-checker/)**  
+- **[password-strenght-checker](password-strength-checker/)**  
   Análise de força de passwords com entropia de Shannon — score em bits, estimativa de tempo de cracking e sugestões de melhoria.
  
 - **[diceware-ptpt](diceware-ptpt/)**  
