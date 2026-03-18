@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora CVSS v3.1</title>
+    <style>
+        :root {
+            --color-none: #7a8288;
+            --color-low: #f8c00c;
+            --color-medium: #fca800;
+            --color-high: #f04438;
+            --color-critical: #c42115;
+            --background-color: #1e1e1e;
+            --text-color: #d4d4d4;
+            --container-bg: #2a2a2a;
+            --button-bg: #3c3c3c;
+            --button-hover-bg: #4a4a4a;
+            --button-selected-bg: #0e639c;
+            --border-color: #444;
+            --tooltip-bg: #1a1a2e;
+            --tooltip-border: #2E75B6;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 1400px;
+        }
+        .calculator {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .results-panel {
+            flex: 1;
+            position: sticky;
+            top: 20px;
+            background-color: var(--container-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .section {
+            background-color: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .section-header {
+            padding: 15px 20px;
+            cursor: pointer;
+            background-color: #333;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .section-header:hover {
+            background-color: #3a3a3a;
+        }
+        .section-content {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .collapsible .section-content {
+            display: none;
+        }
+        .metric {
+            position: relative;
+        }
+        .metric-label {
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .info-icon {
+            cursor: help;
+            font-size: 0.9em;
+            color: var(--tooltip-border);
+            opacity: 0.8;
+        }
+        .info-icon:hover {
+            opacity: 1;
+        }
+        .metric-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .metric-group button {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            background-color: var(--button-bg);
+            color: var(--text-color);
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        .metric-group button:hover {
+            background-color: var(--button-hover-bg);
+        }
+        .metric-group button.selected {
+            background-color: var(--button-selected-bg);
+            border-color: var(--button-selected-bg);
+            font-weight: bold;
+        }
+        
+        /* New Tooltip Styles */
+        .cvss-tooltip {
+            position: fixed;
+            z-index: 1000;
+            background-color: var(--tooltip-bg);
+            color: #fff;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid var(--tooltip-border);
+            max-width: 320px;
+            font-size: 13px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 150ms ease-out;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            line-height: 1.4;
+        }
+        .cvss-tooltip h4 {
+            margin: 0 0 8px 0;
+            color: var(--tooltip-border);
+            font-size: 14px;
+            border-bottom: 1px solid rgba(46, 117, 182, 0.3);
+            padding-bottom: 4px;
+        }
+        .cvss-tooltip .example {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed rgba(255,255,255,0.2);
+            font-style: italic;
+            color: #ccc;
+        }
+
+        .score-display {
+            margin-bottom: 20px;
+        }
+        .score-display h3 {
+            margin-top: 0;
+        }
+        .score-value {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+        .score-rating {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .score-bar {
+            height: 20px;
+            width: 100%;
+            background-color: #444;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .score-bar-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s, background-color 0.3s;
+        }
+        .vector-string-container {
+            margin-top: 20px;
+        }
+        .vector-string-container input {
+            width: calc(100% - 70px);
+            padding: 8px;
+            background-color: #333;
+            border: 1px solid #555;
+            color: var(--text-color);
+            border-radius: 4px;
+        }
+        .vector-string-container button {
+            width: 60px;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--button-bg);
+            color: var(--text-color);
+            cursor: pointer;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="cvss-tooltip" class="cvss-tooltip"></div>
+
+<div class="container">
+    <div class="calculator">
+        <!-- Base Score Section -->
+        <div id="base-section" class="section">
+            <div class="section-header">
+                <h2>Base Score</h2>
+                <span class="arrow">▼</span>
+            </div>
+            <div class="section-content">
+                <!-- Métricas Base -->
+                <div class="metric" data-metric-id="AV">
+                    <span class="metric-label">Attack Vector (AV) <span class="info-icon">ℹ</span></span>
+                    <div class="metric-group" id="AV">
+                        <button value="N" class="selected">Network</button>
+                        <button value="A">Adjacent</button>
+                        <button value="L">Local</button>
+                        <button value="P">Physical</button>
+                    </div>
+                </div>
+                <div class="metric" data-metric-id="AC">
+                    <span class="metric-label">Attack Complexity (AC) <span class="info-icon">ℹ</span></span>
+                    <div class="metric-group" id="AC">
+                        <button value="L" class="selected">Low</button>
+                        <button value="H">High</button>
+                    </div>
+                </div>
+                <div class="metric" data-metric-id="PR">
+                    <span class="metric-label">Privileges Required (PR) <span class="info-icon">ℹ</span></span>
+                    <div class="metric-group" id="PR">
+                        <button value="N" class="selected">None</button>
+                        <button value="L">Low</button>
+                        <button value="H">High</button>
+                    </div>
+                </div>
+                <div class="metric" data-metric-id="UI">
+                    <span class="metric-label">User Interaction (UI) <span class="info-icon">ℹ</span></span>
+                    <div class="metric-group" id="UI">
+                        <button value="N" class="selected">None</button>
+                        <button value="R">Required</button>
+                    </div>
+                </div>
+                <div class="metric" data-metric-id="S">
+                    <span class="metric-label">Scope (S) <span class="info-icon">ℹ</span></span>
+                    <div class="metric-group" id="S">
+                        <button value="U" class="selected">Unchanged</button>
+                        <button value="C">Changed</button>
+                    </div>
+                </div>
+                <div class="metric" data-metric-id="C">
+                    <span class="metric-label">Confidentiality (C) <span class="info-icon">ℹ</span></span>
+                    <div class="metric-group" id="C">
+                        <button value="N" class="selected">None</button>
+                        <button value="L">Low</button>
+                        <button value="H">High</button>
+                    </div>
+                </div>
+                <div class="metric" data-metric-id="I">
+                    <span class="metric-label">Integrity (I) <span class="info-icon">ℹ</span></span>
+                    <div class="metric-group" id="I">
+                        <button value="N" class="selected">None</button>
+                        <button value="L">Low</button>
+                        <button value="H">High</button>
+                    </div>
+                </div>
+                <div class="metric" data-metric-id="A">
+                    <span class="metric-label">Availability (A) <span class="info-icon">ℹ</span></span>
+                    <div class="metric-group" id="A">
+                        <button value="N" class="selected">None</button>
+                        <button value="L">Low</button>
+                        <button value="H">High</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Temporal Score Section -->
+        <div id="temporal-section" class="section collapsible">
+            <div class="section-header">
+                <h2>Temporal Score</h2>
+                <span class="arrow">▶</span>
+            </div>
+            <div class="section-content">
+                <!-- Métricas Temporais -->
+                <div class="metric" data-metric-id="E">
+                    <span class="metric-label">Exploit Code Maturity (E) <span class="info-icon">ℹ</span></span>
+                    <div class="metric-group" id="E">
+                        <button value="X" class="selected">Not Defined</button>
+                        <button value="U">Unproven</button>
+                        <button value="P">Proof-of-Concept</button>
+                        <button value="F">Functional</button>
+                        <button value="H">High</button>
+                    </div>
+                </div>
+                <div class="metric" data-metric-id="RL">
+                    <span class="metric-label">Remediation Level (RL) <span class="info-icon">ℹ</span></span>
+                    <div class="metric-group" id="RL">
+                        <button value="X" class="selected">Not Defined</button>
+                        <button value="O">Official Fix</button>
+                        <button value="T">Temporary Fix</button>
+                        <button value="W">Workaround</button>
+                        <button value="U">Unavailable</button>
+                    </div>
+                </div>
+                <div class="metric" data-metric-id="RC">
+                    <span class="metric-label">Report Confidence (RC) <span class="info-icon">ℹ</span></span>
+                    <div class="metric-group" id="RC">
+                        <button value="X" class="selected">Not Defined</button>
+                        <button value="U">Unknown</button>
+                        <button value="R">Reasonable</button>
+                        <button value="C">Confirmed</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Environmental Score Section -->
+        <div id="environmental-section" class="section collapsible">
+            <div class="section-header">
+                <h2>Environmental Score</h2>
+                <span class="arrow">▶</span>
+            </div>
+            <div class="section-content">
+                <!-- Métricas Ambientais -->
+                <div class="metric" data-metric-id="MAV">
+                    <span class="metric-label">Modified Attack Vector (MAV) <span class="info-icon">ℹ</span></span>
+                    <div class="metric-group" id="MAV">
+                        <button value="X" class="selected">Not Defined</button>
+                        <button value="N">Network</button>
+                        <button value="A">Adjacent</button>
+                        <button value="L">Local</button>
+                        <button value="P">Physical</button>
+                    </div>
+                </div>
+                <div class="metric" data-metric-id="MAC">
+                    <span class="metric-label">Modified Attack Complexity (MAC) <span class="info-icon">ℹ</span></span>
+                    <div class="metric-group" id="MAC">
+                        <button value="X" class="selected">Not Defined</button>
+                        <button value="L">Low</button>
+                        <button value="H">High</button>
+                    </div>
+                </div>
+                <div class="metric" data-metric-id="MPR">
+                    <span class="metric-label">Modified Privileges Required (MPR) <span class="info-icon">ℹ</span></span>
+                    <div class="metric-group" id="MPR">
+                        <button value="X" class="selected">Not Defined</button>
+                        <button value="N">None</button>
+                        <button value="L">Low</button>
+                        <button value="H">High</button>
+                    </div>
+                </div>
+                <div class="metric" data-metric-id="MUI">
+                    <span class="metric-label">Modified User Interaction (MUI) <span class="info-icon">ℹ</span></span>
+                    <div class="metric-group" id="MUI">
+                        <button value="X" class="selected">Not Defined</button>
+                        <button value="N">None</button>
+                        <button value="R">Required</button>
+                    </div>
+                </div>
+                <div class="metric" data-metric-id="MS">
+                    <span class="metric-label">Modified Scope (MS) <span class="info-icon">ℹ</span></span>
+                    <div class="metric-group" id="MS">
+                        <button value="X" class="selected">Not Defined</button>
+                        <button value="U">Unchanged</button>
+                        <button value="C">Changed</button>
+                    </div>
+                </div>
+                <div class="metric" data-metric-id="MC">
+                    <span class="metric-label">Modified Confidentiality (MC) <span class="info-icon">ℹ</span></span>
+                    <div class="metric-group" id="MC">
+                        <button value="X" class="selected">Not Defined</button>
+                        <button value="N">None</button>
+                        <button value="L">Low</button>
+                        <button value="H">High</button>
+                    </div>
+                </div>
+                <div class="metric" data-metric-id="MI">
+                    <span class="metric-label">Modified Integrity (MI) <span class="info-icon">ℹ</span></span>
+                    <div class="metric-group" id="MI">
+                        <button value="X" class="selected">Not Defined</button>
+                        <button value="N">None</button>
+                        <button value="L">Low</button>
+                        <button value="H">High</button>
+                    </div>
+                </div>
+                <div class="metric" data-metric-id="MA">
+                    <span class="metric-label">Modified Availability (MA) <span class="info-icon">ℹ</span></span>
+                    <div class="metric-group" id="MA">
+                        <button value="X" class="selected">Not Defined</button>
+                        <button value="N">None</button>
+                        <button value="L">Low</button>
+                        <button value="H">High</button>
+                    </div>
+                </div>
+                <div class="metric" data-metric-id="CR">
+                    <span class="metric-label">Confidentiality Requirement (CR) <span class="info-icon">ℹ</span></span>
+                    <div class="metric-group" id="CR">
+                        <button value="X" class="selected">Not Defined</button>
+                        <button value="L">Low</button>
+                        <button value="M">Medium</button>
+                        <button value="H">High</button>
+                    </div>
+                </div>
+                <div class="metric" data-metric-id="IR">
+                    <span class="metric-label">Integrity Requirement (IR) <span class="info-icon">ℹ</span></span>
+                    <div class="metric-group" id="IR">
+                        <button value="X" class="selected">Not Defined</button>
+                        <button value="L">Low</button>
+                        <button value="M">Medium</button>
+                        <button value="H">High</button>
+                    </div>
+                </div>
+                <div class="metric" data-metric-id="AR">
+                    <span class="metric-label">Availability Requirement (AR) <span class="info-icon">ℹ</span></span>
+                    <div class="metric-group" id="AR">
+                        <button value="X" class="selected">Not Defined</button>
+                        <button value="L">Low</button>
+                        <button value="M">Medium</button>
+                        <button value="H">High</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="results-panel">
+        <h2>Resultados</h2>
+        
+        <div id="base-score-display" class="score-display">
+            <h3>Base Score</h3>
+            <span class="score-value">0.0</span>
+            <span class="score-rating">None</span>
+            <div class="score-bar"><div class="score-bar-fill"></div></div>
+        </div>
+
+        <div id="temporal-score-display" class="score-display">
+            <h3>Temporal Score</h3>
+            <span class="score-value">0.0</span>
+            <span class="score-rating">None</span>
+            <div class="score-bar"><div class="score-bar-fill"></div></div>
+        </div>
+
+        <div id="environmental-score-display" class="score-display">
+            <h3>Environmental Score</h3>
+            <span class="score-value">0.0</span>
+            <span class="score-rating">None</span>
+            <div class="score-bar"><div class="score-bar-fill"></div></div>
+        </div>
+
+        <div class="vector-string-container">
+            <h3>Vector String</h3>
+            <input type="text" id="vector-string-input" placeholder="Cole um vetor CVSS aqui...">
+            <button id="copy-vector-btn">Copiar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // CVSS v3.1 Constants
+    const CVSS_VERSION = "3.1";
+    const WEIGHTS = {
+        AV: { N: 0.85, A: 0.62, L: 0.55, P: 0.20 },
+        AC: { L: 0.77, H: 0.44 },
+        PR: { N: 0.85, L: 0.62, H: 0.27 },
+        PR_S_CHANGED: { N: 0.85, L: 0.68, H: 0.50 },
+        UI: { N: 0.85, R: 0.62 },
+        S: { U: 6.42, C: 7.52 },
+        C: { N: 0.0, L: 0.22, H: 0.56 },
+        I: { N: 0.0, L: 0.22, H: 0.56 },
+        A: { N: 0.0, L: 0.22, H: 0.56 },
+        E: { X: 1.00, U: 0.91, P: 0.94, F: 0.97, H: 1.00 },
+        RL: { X: 1.00, O: 0.95, T: 0.96, W: 0.97, U: 1.00 },
+        RC: { X: 1.00, U: 0.92, R: 0.96, C: 1.00 },
+        CR: { X: 1.0, L: 0.5, M: 1.0, H: 1.5 },
+        IR: { X: 1.0, L: 0.5, M: 1.0, H: 1.5 },
+        AR: { X: 1.0, L: 0.5, M: 1.0, H: 1.5 }
+    };
+
+    const TOOLTIP_DATA = {
+        AV: {
+            title: "Attack Vector (AV)",
+            description: "Define o contexto em que a vulnerabilidade pode ser explorada. Quanto mais remoto, maior o score.",
+            options: {
+                N: { desc: "Exploração via rede, sem acesso físico ou local necessário.", example: "Log4Shell (CVE-2021-44228) — explorado remotamente via HTTP." },
+                A: { desc: "Requer acesso à mesma rede local ou segmento (ex: Wi-Fi, Bluetooth).", example: "KRACK Attack — exploração do protocolo WPA2 em redes Wi-Fi." },
+                L: { desc: "Requer acesso local ao sistema (sessão interativa ou script local).", example: "CVE-2021-4034 (PwnKit) — escalada de privilégios local no Linux." },
+                P: { desc: "Requer acesso físico ao dispositivo.", example: "Evil Maid Attack — acesso a disco cifrado com acesso físico à máquina." }
+            }
+        },
+        AC: {
+            title: "Attack Complexity (AC)",
+            description: "Condições fora do controlo do atacante necessárias para explorar a vulnerabilidade.",
+            options: {
+                L: { desc: "Sem condições especiais — o ataque pode ser repetido com sucesso consistente.", example: "SQLi básico — basta enviar o payload." },
+                H: { desc: "Requer condições específicas como timing preciso, configuração especial ou informação prévia.", example: "race condition em operações de ficheiros concorrentes." }
+            }
+        },
+        PR: {
+            title: "Privileges Required (PR)",
+            description: "Nível de acesso que o atacante precisa de ter antes de explorar.",
+            options: {
+                N: { desc: "Sem autenticação necessária.", example: "CVE-2017-0144 (EternalBlue) — exploração do SMB sem credenciais." },
+                L: { desc: "Conta com permissões básicas (utilizador normal).", example: "escalada de privilégios que começa com uma conta de utilizador comum." },
+                H: { desc: "Requer conta com privilégios elevados (admin/root).", example: "vulnerabilidade num painel de administração que requer login de admin." }
+            }
+        },
+        UI: {
+            title: "User Interaction (UI)",
+            description: "Se a exploração requer ação de um utilizador legítimo além do atacante.",
+            options: {
+                N: { desc: "Exploração sem qualquer interação do utilizador.", example: "worm que se propaga automaticamente sem intervenção humana." },
+                R: { desc: "Requer que um utilizador execute uma ação (abrir ficheiro, clicar link).", example: "phishing com anexo malicioso — requer que a vítima abra o ficheiro." }
+            }
+        },
+        S: {
+            title: "Scope (S)",
+            description: "Se a vulnerabilidade permite impactar componentes além do componente vulnerável original.",
+            options: {
+                U: { desc: "O impacto fica contido no componente vulnerável.", example: "crash de um serviço isolado sem afetar outros processos." },
+                C: { desc: "A exploração afeta outros componentes ou sistemas.", example: "escape de container Docker que compromete o host subjacente." }
+            }
+        },
+        C: {
+            title: "Confidentiality (C)",
+            description: "Impacto na confidencialidade dos dados.",
+            options: {
+                N: { desc: "Sem impacto nesta dimensão." },
+                L: { desc: "Impacto parcial ou limitado — acesso a dados restritos." },
+                H: { desc: "Impacto total — acesso completo.", example: "dump completo de base de dados com dados pessoais." }
+            }
+        },
+        I: {
+            title: "Integrity (I)",
+            description: "Impacto na integridade — capacidade de modificar dados.",
+            options: {
+                N: { desc: "Sem impacto nesta dimensão." },
+                L: { desc: "Impacto parcial ou limitado — modificação de dados restritos." },
+                H: { desc: "Impacto total — modificação ou destruição completa." }
+            }
+        },
+        A: {
+            title: "Availability (A)",
+            description: "Impacto na disponibilidade do sistema ou serviço.",
+            options: {
+                N: { desc: "Sem impacto nesta dimensão." },
+                L: { desc: "Impacto parcial ou limitado — degradação de performance." },
+                H: { desc: "Impacto total — destruição completa ou interrupção total." }
+            }
+        },
+        E: {
+            title: "Exploit Code Maturity (E)",
+            description: "Maturidade do exploit disponível publicamente.",
+            options: {
+                X: { desc: "Não considerado — usa o valor Base." },
+                U: { desc: "Sem exploit disponível ou apenas teórico." },
+                P: { desc: "PoC público existe mas não é totalmente funcional/automatizado." },
+                F: { desc: "Exploit funcional disponível publicamente (ex: Metasploit module)." },
+                H: { desc: "Exploit amplamente disponível, automatizado, wormable." }
+            }
+        },
+        RL: {
+            title: "Remediation Level (RL)",
+            description: "Estado atual da correção disponível.",
+            options: {
+                X: { desc: "Não considerado." },
+                O: { desc: "Patch oficial do vendor disponível." },
+                T: { desc: "Mitigação temporária oficial disponível." },
+                W: { desc: "Workaround não oficial disponível." },
+                U: { desc: "Sem correção ou mitigação disponível — 0-day." }
+            }
+        },
+        RC: {
+            title: "Report Confidence (RC)",
+            description: "Grau de confiança na existência e detalhes técnicos da vulnerabilidade.",
+            options: {
+                X: { desc: "Não considerado." },
+                U: { desc: "Reportado mas não confirmado." },
+                R: { desc: "Confirmação razoável com detalhes técnicos parciais." },
+                C: { desc: "Confirmado pelo vendor ou com reprodução pública." }
+            }
+        },
+        MAV: { title: "Modified Attack Vector (MAV)", description: "Substitui o valor de Attack Vector para este ambiente específico. Use 'Not Defined' para herdar o valor base." },
+        MAC: { title: "Modified Attack Complexity (MAC)", description: "Substitui o valor de Attack Complexity para este ambiente específico. Use 'Not Defined' para herdar o valor base." },
+        MPR: { title: "Modified Privileges Required (MPR)", description: "Substitui o valor de Privileges Required para este ambiente específico. Use 'Not Defined' para herdar o valor base." },
+        MUI: { title: "Modified User Interaction (MUI)", description: "Substitui o valor de User Interaction para este ambiente específico. Use 'Not Defined' para herdar o valor base." },
+        MS: { title: "Modified Scope (MS)", description: "Substitui o valor de Scope para este ambiente específico. Use 'Not Defined' para herdar o valor base." },
+        MC: { title: "Modified Confidentiality (MC)", description: "Substitui o valor de Confidentiality para este ambiente específico. Use 'Not Defined' para herdar o valor base." },
+        MI: { title: "Modified Integrity (MI)", description: "Substitui o valor de Integrity para este ambiente específico. Use 'Not Defined' para herdar o valor base." },
+        MA: { title: "Modified Availability (MA)", description: "Substitui o valor de Availability para este ambiente específico. Use 'Not Defined' para herdar o valor base." },
+        CR: { title: "Confidentiality Requirement (CR)", description: "Ajusta a importância relativa de Confidentiality para o contexto da organização. High = este ativo é crítico nesta dimensão." },
+        IR: { title: "Integrity Requirement (IR)", description: "Ajusta a importância relativa de Integrity para o contexto da organização. High = este ativo é crítico nesta dimensão." },
+        AR: { title: "Availability Requirement (AR)", description: "Ajusta a importância relativa de Availability para o contexto da organização. High = este ativo é crítico nesta dimensão." }
+    };
+
+    const state = {};
+    const tooltip = document.getElementById('cvss-tooltip');
+
+    function initialize() {
+        // Set default selections
+        document.querySelectorAll('.metric-group').forEach(group => {
+            const metricId = group.id;
+            const selectedButton = group.querySelector('button.selected');
+            state[metricId] = selectedButton.value;
+        });
+
+        // Attach event listeners
+        document.querySelectorAll('.metric-group button').forEach(button => {
+            button.addEventListener('click', handleButtonClick);
+            button.addEventListener('mouseenter', handleButtonHover);
+            button.addEventListener('mouseleave', hideTooltip);
+        });
+
+        document.querySelectorAll('.info-icon').forEach(icon => {
+            icon.addEventListener('mouseenter', handleLabelHover);
+            icon.addEventListener('mouseleave', hideTooltip);
+        });
+
+        document.querySelectorAll('.section-header').forEach(header => {
+            header.addEventListener('click', toggleSection);
+        });
+        
+        document.getElementById('copy-vector-btn').addEventListener('click', copyVectorString);
+        document.getElementById('vector-string-input').addEventListener('paste', handlePasteVectorString);
+        document.getElementById('vector-string-input').addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') parseAndApplyVectorString(e.target.value);
+        });
+
+        calculateAll();
+    }
+
+    function handleLabelHover(event) {
+        const metricEl = event.target.closest('.metric');
+        const metricId = metricEl.dataset.metricId;
+        const data = TOOLTIP_DATA[metricId];
+
+        if (data) {
+            showTooltip(event, `<h4>${data.title}</h4><div>${data.description}</div>`);
+        }
+    }
+
+    function handleButtonHover(event) {
+        const button = event.target;
+        const metricId = button.parentElement.id;
+        const value = button.value;
+        const data = TOOLTIP_DATA[metricId];
+
+        if (data && data.options && data.options[value]) {
+            const opt = data.options[value];
+            let content = `<h4>${button.textContent} (${value})</h4><div>${opt.desc}</div>`;
+            if (opt.example) {
+                content += `<div class="example"><strong>Exemplo:</strong> ${opt.example}</div>`;
+            }
+            showTooltip(event, content);
+        } else if (data && !data.options) {
+            // Para Modified* e CR/IR/AR que não têm opções detalhadas na spec do prompt mas têm descrição geral
+            showTooltip(event, `<h4>${button.textContent}</h4><div>${data.description}</div>`);
+        }
+    }
+
+    function showTooltip(event, content) {
+        tooltip.innerHTML = content;
+        tooltip.style.opacity = '1';
+        
+        // Posicionamento inteligente
+        const rect = event.target.getBoundingClientRect();
+        let x = rect.left + window.scrollX + (rect.width / 2);
+        let y = rect.top + window.scrollY - 10;
+
+        // Ajuste horizontal (centralizado ao elemento)
+        tooltip.style.left = `${x}px`;
+        tooltip.style.top = `${y}px`;
+        tooltip.style.transform = 'translate(-50%, -100%)';
+
+        // Verificar limites do viewport
+        const tooltipRect = tooltip.getBoundingClientRect();
+        if (tooltipRect.left < 10) {
+            tooltip.style.left = '10px';
+            tooltip.style.transform = 'translate(0, -100%)';
+        } else if (tooltipRect.right > window.innerWidth - 10) {
+            tooltip.style.left = `${window.innerWidth - 10}px`;
+            tooltip.style.transform = 'translate(-100%, -100%)';
+        }
+    }
+
+    function hideTooltip() {
+        tooltip.style.opacity = '0';
+    }
+
+    function handleButtonClick(event) {
+        const button = event.target;
+        const metricId = button.parentElement.id;
+        const value = button.value;
+
+        // Update state
+        state[metricId] = value;
+
+        // Update UI
+        button.parentElement.querySelectorAll('button').forEach(btn => btn.classList.remove('selected'));
+        button.classList.add('selected');
+
+        calculateAll();
+    }
+
+    function toggleSection(event) {
+        const section = event.currentTarget.parentElement;
+        section.classList.toggle('collapsible');
+        const arrow = section.querySelector('.arrow');
+        arrow.textContent = section.classList.contains('collapsible') ? '▶' : '▼';
+    }
+
+    function roundup(value) {
+        return Math.ceil(value * 10) / 10;
+    }
+
+    function calculateAll() {
+        const baseMetrics = {
+            AV: state.AV, AC: state.AC, PR: state.PR, UI: state.UI, S: state.S,
+            C: state.C, I: state.I, A: state.A
+        };
+        const temporalMetrics = { E: state.E, RL: state.RL, RC: state.RC };
+
+        const baseScore = calculateBaseScore(baseMetrics);
+        updateScoreDisplay('base', baseScore);
+
+        const temporalScore = calculateTemporalScore(baseScore, temporalMetrics);
+        updateScoreDisplay('temporal', temporalScore);
+        
+        const environmentalScore = calculateEnvironmentalScore(baseMetrics, temporalMetrics);
+        updateScoreDisplay('environmental', environmentalScore);
+
+        updateVectorString();
+    }
+
+    function calculateBaseScore(m) {
+        // CVSS v3.1 spec section 2.1
+        const impactConf = WEIGHTS.C[m.C];
+        const impactInteg = WEIGHTS.I[m.I];
+        const impactAvail = WEIGHTS.A[m.A];
+        
+        const iscBase = 1 - ((1 - impactConf) * (1 - impactInteg) * (1 - impactAvail));
+
+        let isc;
+        if (m.S === 'U') {
+            isc = WEIGHTS.S.U * iscBase;
+        } else {
+            isc = WEIGHTS.S.C * (iscBase - 0.029) - 3.25 * Math.pow(iscBase - 0.02, 15);
+        }
+
+        if (isc <= 0) {
+            return 0.0;
+        }
+
+        // CVSS v3.1 spec section 2.2
+        const prWeight = m.S === 'U' ? WEIGHTS.PR[m.PR] : WEIGHTS.PR_S_CHANGED[m.PR];
+        const exploitability = 8.22 * WEIGHTS.AV[m.AV] * WEIGHTS.AC[m.AC] * prWeight * WEIGHTS.UI[m.UI];
+
+        let baseScore;
+        if (m.S === 'U') {
+            baseScore = Math.min(isc + exploitability, 10);
+        } else {
+            baseScore = Math.min(1.08 * (isc + exploitability), 10);
+        }
+
+        return roundup(baseScore);
+    }
+
+    function calculateTemporalScore(baseScore, m) {
+        // CVSS v3.1 spec section 3.1
+        const exploitCodeMaturity = WEIGHTS.E[m.E];
+        const remediationLevel = WEIGHTS.RL[m.RL];
+        const reportConfidence = WEIGHTS.RC[m.RC];
+
+        const temporalScore = baseScore * exploitCodeMaturity * remediationLevel * reportConfidence;
+        return roundup(temporalScore);
+    }
+    
+    function calculateEnvironmentalScore(baseMetrics, temporalMetrics) {
+        // CVSS v3.1 spec section 4
+        const m = { ...state }; // Use full state for modified metrics
+
+        const mav = m.MAV !== 'X' ? m.MAV : baseMetrics.AV;
+        const mac = m.MAC !== 'X' ? m.MAC : baseMetrics.AC;
+        const mpr = m.MPR !== 'X' ? m.MPR : baseMetrics.PR;
+        const mui = m.MUI !== 'X' ? m.MUI : baseMetrics.UI;
+        const ms = m.MS !== 'X' ? m.MS : baseMetrics.S;
+        const mc = m.MC !== 'X' ? m.MC : baseMetrics.C;
+        const mi = m.MI !== 'X' ? m.MI : baseMetrics.I;
+        const ma = m.MA !== 'X' ? m.MA : baseMetrics.A;
+
+        const cr = WEIGHTS.CR[m.CR];
+        const ir = WEIGHTS.IR[m.IR];
+        const ar = WEIGHTS.AR[m.AR];
+
+        const modifiedImpactConf = WEIGHTS.C[mc];
+        const modifiedImpactInteg = WEIGHTS.I[mi];
+        const modifiedImpactAvail = WEIGHTS.A[ma];
+
+        const miscBase = Math.min(1 - ( (1 - modifiedImpactConf * cr) * (1 - modifiedImpactInteg * ir) * (1 - modifiedImpactAvail * ar) ), 0.915);
+
+        let misc;
+        if (ms === 'U') {
+            misc = WEIGHTS.S.U * miscBase;
+        } else {
+            misc = WEIGHTS.S.C * (miscBase - 0.029) - 3.25 * Math.pow(miscBase - 0.02, 15);
+        }
+        
+        if (misc <= 0) {
+            return 0.0;
+        }
+
+        const mprWeight = ms === 'U' ? WEIGHTS.PR[mpr] : WEIGHTS.PR_S_CHANGED[mpr];
+        const modifiedExploitability = 8.22 * WEIGHTS.AV[mav] * WEIGHTS.AC[mac] * mprWeight * WEIGHTS.UI[mui];
+        
+        let envScore;
+        if (ms === 'U') {
+            envScore = roundup(Math.min(misc + modifiedExploitability, 10));
+        } else {
+            envScore = roundup(Math.min(1.08 * (misc + modifiedExploitability), 10));
+        }
+
+        const exploitCodeMaturity = WEIGHTS.E[temporalMetrics.E];
+        const remediationLevel = WEIGHTS.RL[temporalMetrics.RL];
+        const reportConfidence = WEIGHTS.RC[temporalMetrics.RC];
+
+        envScore = envScore * exploitCodeMaturity * remediationLevel * reportConfidence;
+
+        return roundup(envScore);
+    }
+
+    function getRating(score) {
+        if (score === 0.0) return { name: 'None', color: 'var(--color-none)' };
+        if (score >= 0.1 && score <= 3.9) return { name: 'Low', color: 'var(--color-low)' };
+        if (score >= 4.0 && score <= 6.9) return { name: 'Medium', color: 'var(--color-medium)' };
+        if (score >= 7.0 && score <= 8.9) return { name: 'High', color: 'var(--color-high)' };
+        if (score >= 9.0 && score <= 10.0) return { name: 'Critical', color: 'var(--color-critical)' };
+        return { name: '', color: '' };
+    }
+
+    function updateScoreDisplay(type, score) {
+        const display = document.getElementById(`${type}-score-display`);
+        const valueEl = display.querySelector('.score-value');
+        const ratingEl = display.querySelector('.score-rating');
+        const barFillEl = display.querySelector('.score-bar-fill');
+
+        const rating = getRating(score);
+
+        valueEl.textContent = score.toFixed(1);
+        ratingEl.textContent = rating.name;
+        ratingEl.style.color = rating.color;
+        barFillEl.style.width = `${score * 10}%`;
+        barFillEl.style.backgroundColor = rating.color;
+    }
+
+    function updateVectorString() {
+        let vector = `CVSS:${CVSS_VERSION}`;
+        const baseMetricsOrder = ['AV', 'AC', 'PR', 'UI', 'S', 'C', 'I', 'A'];
+        baseMetricsOrder.forEach(m => vector += `/${m}:${state[m]}`);
+        
+        const temporalMetricsOrder = ['E', 'RL', 'RC'];
+        if (temporalMetricsOrder.some(m => state[m] !== 'X')) {
+            temporalMetricsOrder.forEach(m => vector += `/${m}:${state[m]}`);
+        }
+
+        const envMetricsOrder = ['MAV', 'MAC', 'MPR', 'MUI', 'MS', 'MC', 'MI', 'MA'];
+        const envReqOrder = ['CR', 'IR', 'AR'];
+        if (envMetricsOrder.some(m => state[m] !== 'X') || envReqOrder.some(m => state[m] !== 'X')) {
+             if (!temporalMetricsOrder.some(m => state[m] !== 'X')) {
+                temporalMetricsOrder.forEach(m => vector += `/${m}:${state[m]}`);
+            }
+            envMetricsOrder.forEach(m => vector += `/${m}:${state[m]}`);
+            envReqOrder.forEach(m => vector += `/${m}:${state[m]}`);
+        }
+        
+        document.getElementById('vector-string-input').value = vector;
+    }
+    
+    function copyVectorString() {
+        const input = document.getElementById('vector-string-input');
+        input.select();
+        document.execCommand('copy');
+    }
+
+    function handlePasteVectorString(event) {
+        event.preventDefault();
+        const pastedText = (event.clipboardData || window.clipboardData).getData('text');
+        parseAndApplyVectorString(pastedText);
+    }
+
+    function parseAndApplyVectorString(vectorString) {
+        try {
+            const parts = vectorString.trim().split('/');
+            if (!parts[0].toUpperCase().startsWith("CVSS:3.1")) {
+                throw new Error("Invalid CVSS v3.1 vector string");
+            }
+
+            const newMetrics = {};
+            for (let i = 1; i < parts.length; i++) {
+                const [metric, value] = parts[i].split(':');
+                newMetrics[metric] = value;
+            }
+
+            // Reset all to default before applying
+            document.querySelectorAll('.metric-group').forEach(group => {
+                const defaultButton = group.querySelector('button[value="N"]') || group.querySelector('button[value="L"]') || group.querySelector('button[value="U"]') || group.querySelector('button[value="X"]');
+                state[group.id] = defaultButton.value;
+            });
+
+            // Apply parsed metrics
+            for (const [metric, value] of Object.entries(newMetrics)) {
+                const group = document.getElementById(metric);
+                if (group) {
+                    const button = group.querySelector(`button[value="${value}"]`);
+                    if (button) {
+                        state[metric] = value;
+                    }
+                }
+            }
+            
+            // Update UI from new state
+            document.querySelectorAll('.metric-group').forEach(group => {
+                group.querySelectorAll('button').forEach(btn => btn.classList.remove('selected'));
+                const selectedButton = group.querySelector(`button[value="${state[group.id]}"]`);
+                if(selectedButton) selectedButton.classList.add('selected');
+            });
+
+            calculateAll();
+            document.getElementById('vector-string-input').value = vectorString;
+
+        } catch (error) {
+            console.error("Failed to parse vector string:", error);
+            alert("Invalid CVSS v3.1 vector string provided.");
+        }
+    }
+
+    initialize();
+});
+</script>
+</body>
+</html>
