@@ -5,7 +5,7 @@ Esta é uma ferramenta web para análise de força de passwords que utiliza a **
 
 O projeto é construído com Python (Flask) no backend e HTML/CSS/JavaScript puros no frontend, sem dependências externas além do Flask.
 
-![Screenshot da aplicação](screenshot.png) <!-- Adicione um screenshot aqui se desejar -->
+<img width="551" height="788" alt="app runing" src="https://github.com/user-attachments/assets/44027529-8147-4ddf-9348-cc93f4eb7b1f" />
 
 ## Funcionalidades
 
