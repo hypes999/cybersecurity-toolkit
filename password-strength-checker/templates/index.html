@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificador de Força de Password com Entropia</title>
+    <style>
+        :root {
+            --color-bg: #1a1a1a;
+            --color-surface: #2c2c2c;
+            --color-text: #e0e0e0;
+            --color-primary: #007bff;
+            --color-border: #444;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+            --color-very-weak: #dc3545;
+            --color-weak: #fd7e14;
+            --color-reasonable: #ffc107;
+            --color-strong: #28a745;
+            --color-very-strong: #17a2b8;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: var(--color-surface);
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: var(--color-primary);
+        }
+
+        .password-input-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        #password-input {
+            width: 100%;
+            padding: 12px;
+            padding-right: 45px; /* Space for the toggle button */
+            background-color: var(--color-bg);
+            border: 1px solid var(--color-border);
+            border-radius: 5px;
+            color: var(--color-text);
+            font-size: 1.1em;
+            box-sizing: border-box;
+        }
+
+        #toggle-password {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+
+        .strength-bar-container {
+            width: 100%;
+            height: 10px;
+            background-color: var(--color-bg);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        #strength-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--color-very-weak);
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .result-item {
+            background-color: var(--color-bg);
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid var(--color-border);
+        }
+
+        .result-item h3 {
+            margin: 0 0 5px 0;
+            font-size: 0.9em;
+            color: #aaa;
+            text-transform: uppercase;
+        }
+
+        .result-item p {
+            margin: 0;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        #strength-text.very-weak { color: var(--color-very-weak); }
+        #strength-text.weak { color: var(--color-weak); }
+        #strength-text.reasonable { color: var(--color-reasonable); }
+        #strength-text.strong { color: var(--color-strong); }
+        #strength-text.very-strong { color: var(--color-very-strong); }
+
+        #suggestions {
+            background-color: var(--color-bg);
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        #suggestions h2 {
+            margin-top: 0;
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 10px;
+        }
+
+        #suggestions ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #suggestions li {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        #suggestions li::before {
+            content: '\2714'; /* Checkmark */
+            color: var(--color-strong);
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        #suggestions li.suggestion-needed::before {
+            content: '\2718'; /* Cross */
+            color: var(--color-weak);
+        }
+        
+        #suggestions .impact {
+            font-size: 0.85em;
+            color: #aaa;
+            margin-left: 24px; /* Align with text */
+            display: block;
+        }
+
+        .explanation {
+            margin-top: 30px;
+        }
+
+        .explanation details {
+            background-color: var(--color-bg);
+            border: 1px solid var(--color-border);
+            border-radius: 5px;
+            padding: 15px;
+        }
+
+        .explanation summary {
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--color-primary);
+        }
+
+        .explanation p, .explanation pre {
+            margin-top: 10px;
+        }
+
+        code {
+            background-color: #111;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Verificador de Força de Password</h1>
+        
+        <div class="password-input-container">
+            <input type="password" id="password-input" placeholder="Escreva a sua password...">
+            <button id="toggle-password" title="Mostrar/Esconder password">👁️</button>
+        </div>
+
+        <div class="strength-bar-container">
+            <div id="strength-bar"></div>
+        </div>
+
+        <div class="results-grid">
+            <div class="result-item" id="entropy-box">
+                <h3>Entropia (Shannon)</h3>
+                <p id="entropy-value">- bits</p>
+            </div>
+            <div class="result-item" id="strength-box">
+                <h3>Classificação</h3>
+                <p id="strength-text">-</p>
+            </div>
+            <div class="result-item" id="crack-time-box">
+                <h3>Tempo de Cracking (Estimado)</h3>
+                <p id="crack-time-value">-</p>
+            </div>
+            <div class="result-item" id="alphabet-box">
+                <h3>Alfabeto Detetado</h3>
+                <p id="alphabet-value">-</p>
+            </div>
+        </div>
+
+        <div id="suggestions">
+            <h2>Sugestões de Melhoria</h2>
+            <ul id="suggestions-list"></ul>
+        </div>
+
+        <div class="explanation">
+            <details>
+                <summary>Como funciona o cálculo?</summary>
+                <p>Esta ferramenta usa a fórmula de <strong>Entropia de Shannon</strong> para medir a imprevisibilidade (força) de uma password em bits.</p>
+                <p>A fórmula é: <code>H = L × log₂(N)</code></p>
+                <ul>
+                    <li><code>H</code>: Entropia em bits.</li>
+                    <li><code>L</code>: Comprimento da password.</li>
+                    <li><code>N</code>: Tamanho do conjunto de caracteres possíveis (o "alfabeto").</li>
+                </ul>
+                <p>O valor de <code>N</code> é detetado automaticamente:</p>
+                <ul>
+                    <li>Apenas minúsculas: <code>N=26</code></li>
+                    <li>Minúsculas + Maiúsculas: <code>N=52</code></li>
+                    <li>+ Dígitos: <code>N=62</code></li>
+                    <li>+ Símbolos: <code>N=95</code> (baseado nos caracteres imprimíveis do ASCII)</li>
+                </ul>
+                <p>O <strong>tempo de cracking</strong> é uma estimativa teórica assumindo que um atacante consegue testar 10 mil milhões (10<sup>10</sup>) de passwords por segundo. O tempo real pode variar drasticamente dependendo do hardware do atacante e do algoritmo de hash usado.</p>
+            </details>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const passwordInput = document.getElementById('password-input');
+            const togglePassword = document.getElementById('toggle-password');
+            
+            const strengthBar = document.getElementById('strength-bar');
+            const entropyValue = document.getElementById('entropy-value');
+            const strengthText = document.getElementById('strength-text');
+            const crackTimeValue = document.getElementById('crack-time-value');
+            const alphabetValue = document.getElementById('alphabet-value');
+            const suggestionsList = document.getElementById('suggestions-list');
+
+            const entropyBox = document.getElementById('entropy-box');
+            const strengthBox = document.getElementById('strength-box');
+
+            const COMMON_PASSWORDS = [
+                "123456", "password", "123456789", "12345678", "12345", "1234", "qwerty",
+                "111111", "1234567", "dragon", "pussy", "123123", "iloveyou", "football",
+                "1234567890", "senha", "batman", "superman", "shadow", "sunshine"
+            ];
+
+            // --- Event Listeners ---
+            passwordInput.addEventListener('input', () => {
+                const password = passwordInput.value;
+                // NOTA DE SEGURANÇA: Todos os cálculos são feitos aqui, no cliente.
+                // A password não é enviada para o servidor para análise em tempo real,
+                // minimizando a exposição.
+                analyzePassword(password);
+            });
+
+            togglePassword.addEventListener('click', () => {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                togglePassword.textContent = type === 'password' ? '👁️' : '🙈';
+            });
+
+            // --- Analysis Logic ---
+            function analyzePassword(password) {
+                if (!password) {
+                    resetUI();
+                    return;
+                }
+
+                const length = password.length;
+                
+                // 1. Detectar o conjunto de caracteres (N)
+                const { n, alphabetName, has } = getCharacterSet(password);
+
+                // 2. Calcular Entropia de Shannon: H = L * log2(N)
+                const entropy = length * (n > 1 ? Math.log2(n) : 0);
+
+                // 3. Classificar a força
+                const strength = getStrengthClassification(entropy);
+
+                // 4. Estimar tempo de cracking
+                const crackTime = estimateCrackTime(n, length);
+
+                // 5. Gerar sugestões
+                const suggestions = getSuggestions(password, length, n, has, entropy);
+
+                // 6. Atualizar a UI
+                updateUI(entropy, strength, crackTime, alphabetName, n, suggestions);
+            }
+
+            function getCharacterSet(password) {
+                const hasLower = /[a-z]/.test(password);
+                const hasUpper = /[A-Z]/.test(password);
+                const hasDigits = /[0-9]/.test(password);
+                const hasSymbols = /[^a-zA-Z0-9]/.test(password);
+
+                let n = 0;
+                let alphabetName = [];
+
+                if (hasSymbols) {
+                    // Se tem símbolos, assumimos o conjunto completo de 95 caracteres imprimíveis.
+                    n = 95;
+                    alphabetName = ["Minúsculas", "Maiúsculas", "Dígitos", "Símbolos"];
+                } else {
+                    if (hasLower) { n += 26; alphabetName.push("Minúsculas"); }
+                    if (hasUpper) { n += 26; alphabetName.push("Maiúsculas"); }
+                    if (hasDigits) { n += 10; alphabetName.push("Dígitos"); }
+                }
+
+                return {
+                    n: n > 0 ? n : 1, // Evita log(0)
+                    alphabetName: alphabetName.join(' + ') || 'Nenhum',
+                    has: { hasLower, hasUpper, hasDigits, hasSymbols }
+                };
+            }
+
+            function getStrengthClassification(entropy) {
+                if (entropy < 28) return { text: "Muito Fraca", className: "very-weak", score: 1 };
+                if (entropy < 36) return { text: "Fraca", className: "weak", score: 2 };
+                if (entropy < 60) return { text: "Razoável", className: "reasonable", score: 3 };
+                if (entropy < 128) return { text: "Forte", className: "strong", score: 4 };
+                return { text: "Muito Forte", className: "very-strong", score: 5 };
+            }
+
+            function estimateCrackTime(n, l) {
+                if (l === 0 || n <= 1) return "Instantâneo";
+
+                const ATTACKER_SPEED_PER_SECOND = 1e10; // 10 mil milhões de tentativas/segundo
+                const totalCombinations = Math.pow(n, l);
+                let seconds = (totalCombinations / ATTACKER_SPEED_PER_SECOND) / 2; // Tempo médio
+
+                if (seconds < 1) return "< 1 segundo";
+                if (seconds < 60) return `${Math.round(seconds)} segundos`;
+                
+                const minutes = seconds / 60;
+                if (minutes < 60) return `${Math.round(minutes)} minutos`;
+
+                const hours = minutes / 60;
+                if (hours < 24) return `${Math.round(hours)} horas`;
+
+                const days = hours / 24;
+                if (days < 365) return `${Math.round(days)} dias`;
+
+                const years = days / 365;
+                if (years < 100) return `${Math.round(years)} anos`;
+
+                const centuries = years / 100;
+                return `${Math.round(centuries)} séculos`;
+            }
+
+            function getSuggestions(password, length, n, has, currentEntropy) {
+                let suggestions = [];
+                const isCommon = COMMON_PASSWORDS.includes(password.toLowerCase());
+
+                // Sugestão de comprimento
+                suggestions.push({
+                    message: "Ter pelo menos 16 caracteres.",
+                    needed: length < 12,
+                    impact: `Aumentar para 16 caracteres (com N=${n}) daria ${ (16 * (n > 1 ? Math.log2(n) : 0)).toFixed(2) } bits.`
+                });
+
+                // Sugestão de maiúsculas
+                const nWithUpper = getCharacterSet(password + 'A').n;
+                suggestions.push({
+                    message: "Incluir letras maiúsculas (A-Z).",
+                    needed: !has.hasUpper,
+                    impact: `Aumentaria N de ${n} para ${nWithUpper}, resultando em ${(length * (nWithUpper > 1 ? Math.log2(nWithUpper) : 0)).toFixed(2)} bits.`
+                });
+
+                // Sugestão de números
+                const nWithDigits = getCharacterSet(password + '1').n;
+                suggestions.push({
+                    message: "Incluir números (0-9).",
+                    needed: !has.hasDigits,
+                    impact: `Aumentaria N de ${n} para ${nWithDigits}, resultando em ${(length * (nWithDigits > 1 ? Math.log2(nWithDigits) : 0)).toFixed(2)} bits.`
+                });
+
+                // Sugestão de símbolos
+                const nWithSymbols = 95;
+                suggestions.push({
+                    message: "Incluir símbolos (!@#$...).",
+                    needed: !has.hasSymbols,
+                    impact: `Aumentaria N de ${n} para ${nWithSymbols}, resultando em ${(length * Math.log2(nWithSymbols)).toFixed(2)} bits.`
+                });
+
+                // Sugestão de password comum
+                suggestions.push({
+                    message: "Evitar passwords comuns.",
+                    needed: isCommon,
+                    impact: "Passwords comuns são as primeiras a serem tentadas em ataques."
+                });
+
+                return suggestions;
+            }
+
+            // --- UI Update Logic ---
+            function updateUI(entropy, strength, crackTime, alphabetName, n, suggestions) {
+                // Update entropy and strength text
+                entropyValue.textContent = `${entropy.toFixed(2)} bits`;
+                strengthText.textContent = strength.text;
+                strengthText.className = strength.className;
+
+                // Update border colors
+                const colorVar = `var(--color-${strength.className})`;
+                entropyBox.style.borderLeftColor = colorVar;
+                strengthBox.style.borderLeftColor = colorVar;
+
+                // Update progress bar
+                const barWidth = (strength.score / 5) * 100;
+                strengthBar.style.width = `${barWidth}%`;
+                strengthBar.style.backgroundColor = colorVar;
+
+                // Update other info
+                crackTimeValue.textContent = crackTime;
+                alphabetValue.textContent = `${alphabetName} (N=${n})`;
+
+                // Update suggestions
+                suggestionsList.innerHTML = '';
+                suggestions.forEach(sugg => {
+                    const li = document.createElement('li');
+                    if (sugg.needed) {
+                        li.classList.add('suggestion-needed');
+                    }
+                    li.innerHTML = `${sugg.message} <small class="impact">${sugg.impact}</small>`;
+                    suggestionsList.appendChild(li);
+                });
+            }
+
+            function resetUI() {
+                entropyValue.textContent = '- bits';
+                strengthText.textContent = '-';
+                strengthText.className = '';
+                crackTimeValue.textContent = '-';
+                alphabetValue.textContent = '-';
+                strengthBar.style.width = '0%';
+                strengthBar.style.backgroundColor = 'var(--color-very-weak)';
+                entropyBox.style.borderLeftColor = 'var(--color-border)';
+                strengthBox.style.borderLeftColor = 'var(--color-border)';
+                suggestionsList.innerHTML = '';
+            }
+
+            // Initial call for placeholder
+            resetUI();
+        });
+    </script>
+
+</body>
+</html>
