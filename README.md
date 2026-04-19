@@ -17,6 +17,8 @@ Ferramentas de cybersecurity para portefólio e SOC operations.
  
 - **[Severity-Calculator](Severity-Calculator/)**  
   Calculadora simples de severidade para findings de segurança.
+
+- **[Phishing Email Analyzer](phishing-email-analyzer/)** — Ferramenta de análise de emails de phishing com extração de IoCs, análise de HTML, deteção de anexos suspeitos, integração com Abuse.ch e VirusTotal.
  
 ## Setup
  
