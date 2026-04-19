@@ -1,0 +1,21 @@
+From: IRS Tax Refund <refund@irs-tax-gov.org>
+Subject: Tax Refund Notification - $3,800.00
+To: victim@email.com
+Date: Sun, 20 Apr 2026 08:00:00 +0000
+Authentication-Results: mx.irs-tax-gov.org; spf=fail; dkim=fail; dmarc=fail
+Return-Path: <refund@irs-tax-gov.org>
+
+Dear Taxpayer,
+
+After reviewing your tax return, we have determined that you are eligible for a refund of $3,800.00.
+
+To receive your refund, you must verify your banking information within 48 hours:
+
+https://irs-refund-portal.com/verify?refund=3800
+
+Failure to claim your refund within the deadline will result in forfeiture.
+
+Internal Revenue Service
+Department of Treasury
+
+This is an automated message. Do not reply to this email.

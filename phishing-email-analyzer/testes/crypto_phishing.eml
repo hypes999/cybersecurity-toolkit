@@ -1,0 +1,18 @@
+From: security@cryptowallet-verify.net
+Subject: ACTION REQUIRED: Verify Your Crypto Wallet
+To: crypto_user@email.com
+Date: Sun, 20 Apr 2026 09:30:00 +0000
+Authentication-Results: mx.cryptowallet-verify.net; spf=fail; dkim=fail; dmarc=fail
+Return-Path: <security@cryptowallet-verify.net>
+
+Your crypto wallet requires immediate verification.
+
+We have detected unusual login attempts from a new device. Your account will be suspended in 24 hours unless you verify.
+
+Click here to verify: https://cryptowallet-secure.com/verify/wallet?user=wallet123
+
+Verify now to avoid losing access to your funds.
+
+Wallet: 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D
+
+Support Team

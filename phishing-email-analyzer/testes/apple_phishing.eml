@@ -1,0 +1,16 @@
+From: security@apple-id-verify.com
+Subject: Urgent: Your Apple ID has been locked
+To: victim@email.com
+Date: Sat, 19 Apr 2026 14:30:00 +0000
+Authentication-Results: mx.apple-id-verify.com; spf=fail; dkim=fail; dmarc=fail
+Return-Path: <bounce@apple-id-verify.com>
+
+Dear Customer,
+
+We have detected unusual activity on your Apple ID. Your account will be locked within 24 hours unless you verify your identity.
+
+Verify Now: https://apple-secure-verify987.com/id/login?user=victim@email.com
+
+If you don't verify, your account will be permanently suspended.
+
+Apple Support Team

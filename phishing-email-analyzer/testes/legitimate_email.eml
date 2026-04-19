@@ -1,0 +1,22 @@
+From: John Smith <john.smith@legitimate-company.com>
+Subject: Meeting Request - Project Review
+To: colleague@email.com
+Date: Sat, 19 Apr 2026 11:00:00 +0100
+Authentication-Results: mx.legitimate-company.com; spf=pass; dkim=pass; dmarc=pass
+Return-Path: <john.smith@legitimate-company.com>
+Content-Type: text/plain
+
+Hi,
+
+Just wanted to schedule a quick call to discuss the project progress.
+
+Are you available tomorrow at 2pm?
+
+Thanks,
+John
+
+--
+John Smith
+Senior Developer
+Legitimate Company Ltd.
+Tel: +351 123 456 789

@@ -1,0 +1,20 @@
+From: noreply@paypal-security-alert.net
+Subject: PayPal: Security Alert - Unauthorized Transaction
+To: victim@email.com
+Date: Sat, 19 Apr 2026 15:00:00 +0000
+Authentication-Results: mx.paypal-security-alert.net; spf=fail; dkim=none; dmarc=fail
+Return-Path: <support@paypal-security-alert.net>
+Reply-To: verify@paypal-security-alert.net
+
+Dear Customer,
+
+We noticed a transaction of €450.00 from your PayPal account.
+
+If you did NOT authorize this transaction, please click below immediately to secure your account:
+
+https://paypal-verify-login.com/secure?ref=48291
+
+Act now! You have 12 hours before the transaction is finalized.
+
+PayPal Security Team
+This is an automated message - do not reply directly

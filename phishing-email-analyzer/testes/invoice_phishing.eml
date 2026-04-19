@@ -1,0 +1,17 @@
+From:support@netsuite-alert.com
+Subject: Action Required: Invoice #INV-2026-4892 Overdue
+To: victim@company.com
+Date: Sat, 19 Apr 2026 10:15:00 +0000
+Authentication-Results: mx.netsuite-alert.com; spf=fail; dkim=fail; dmarc=fail
+Return-Path: <billing@netsuite-alert.com>
+Content-Type: text/html
+
+<html>
+<body>
+<p>Dear Customer,</p>
+<p>Your invoice #INV-2026-4892 for €2,340.00 is overdue.</p>
+<p>Please make payment immediately to avoid service interruption.</p>
+<p><a href="http://netsuite-payment123.com/pay?invoice=4892">Click here to pay now</a></p>
+<p>Thank you,<br>Netsuite Billing</p>
+</body>
+</html>

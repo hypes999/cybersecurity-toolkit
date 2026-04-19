@@ -1,0 +1,26 @@
+From: CEO <ceo@company-name.com>
+Subject: URGENT - Wire Transfer Required
+To: finance@company.com
+Date: Sat, 19 Apr 2026 17:00:00 +0000
+Authentication-Results: mx.company-name.com; spf=softfail; dkim=pass; dmarc=pass
+Return-Path: <ceo@company-name.com>
+Importance: high
+X-Priority: 1
+
+Hi,
+
+I need you to process an urgent wire transfer for a new vendor. Please transfer €15,000 to the following account immediately:
+
+Bank: First National Bank
+Account: 4829162
+Routing: 021000089
+SWIFT: FNBAUS33
+
+This is time-sensitive. Please confirm once done.
+
+Sent from my iPhone
+
+--
+CEO Name
+Company Name
+Direct: +1 555-0123

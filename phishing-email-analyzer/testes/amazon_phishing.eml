@@ -1,0 +1,22 @@
+From: Amazon <customer-service@amazon-orders-delivery.com>
+Subject: Your Amazon Order #114-5823912-4839201 Has Been Shipped
+To: buyer@email.com
+Date: Sat, 19 Apr 2026 16:45:00 +0000
+Authentication-Results: mx.amazon-orders-delivery.com; spf=fail; dkim=fail; dmarc=fail
+Return-Path: <shipping@amazon-orders-delivery.com>
+Content-Type: text/html
+
+<html>
+<body>
+<div style="font-family: Arial, sans-serif;">
+<h2 style="color: #FF9900;">Amazon.com</h2>
+<p>Your order has been shipped!</p>
+<p><strong>Order #114-5823912-4839201</strong></p>
+<p>Expected delivery: April 22, 2026</p>
+<hr>
+<p>Track your package:</p>
+<p><a href="https://amazon-delivery-track.com/order/114-5823912">Click here to track</a></p>
+<p>Or track using this code: AMZN-48291</p>
+</div>
+</body>
+</html>

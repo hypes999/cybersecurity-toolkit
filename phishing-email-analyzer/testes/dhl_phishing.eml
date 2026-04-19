@@ -1,0 +1,20 @@
+From: DHL Express <tracking@dhl-delivery-notice.net>
+Subject: Package Delivery Notification - Action Required
+To: customer@email.com
+Date: Sun, 20 Apr 2026 10:00:00 +0000
+Authentication-Results: mx.dhl-delivery-notice.net; spf=fail; dkim=fail; dmarc=fail
+Return-Path: <noreply@dhl-delivery-notice.net>
+Content-Type: text/html
+
+<html>
+<body>
+<p>Dear Customer,</p>
+<p>Your package is waiting for delivery. A customs fee of €12.99 must be paid before we can deliver.</p>
+<p><strong>Tracking Number:</strong> DHL-82938293</p>
+<p><strong>Amount Due:</strong> €12.99</p>
+<p>Please pay the customs fee now to avoid return to sender:</p>
+<p><a href="http://dhl-customs-payment.com/pay?tracking=82938293">Click here to pay</a></p>
+<p>If not paid within 48 hours, package will be returned.</p>
+<p>DHL Express<br>International Shipping</p>
+</body>
+</html>
