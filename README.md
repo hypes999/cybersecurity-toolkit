@@ -19,6 +19,8 @@ Ferramentas de cybersecurity para portefólio e SOC operations.
   Calculadora simples de severidade para findings de segurança.
 
 - **[Phishing Email Analyzer](phishing-email-analyzer/)** — Ferramenta de análise de emails de phishing com extração de IoCs, análise de HTML, deteção de anexos suspeitos, integração com Abuse.ch e VirusTotal.
+
+- **[Malware Hash Scanner](Malware-Hash-Scanner/)** — Ferramenta de análise de hashes contra VirusTotal, MalwareBazaar e AlienVault OTX. Suporta CLI e GUI Streamlit.
  
 ## Setup
  
